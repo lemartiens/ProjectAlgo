@@ -11,6 +11,7 @@ Public Class Form1
     Dim M As monde
     Dim feuille As Bitmap
     Dim dessin As Graphics
+
     Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
         nbp = CInt(NbPoissonsTxt.Text)
         rmin = 2
@@ -24,41 +25,42 @@ Public Class Form1
         PictureBox1.Image = feuille
         Randomize()
         initialiser(M)
-        initprop(M, nbp, inf)
+
 
 
 
         Timer1.Interval = 10
         Timer1.Start()
+
     End Sub
     Private Sub afficherMonde()
         feuille = New Bitmap(500, 500)
         dessin = Graphics.FromImage(feuille)
         
 
-        propagation(M)
+
         uupdatevit(M, 0.01, nbp)
         PictureBox1.Image = feuille
-
+       
     End Sub
     Private Sub initialiser(ByRef m As monde)
-        ReDim m.Particules(nbp - 1)
+        ReDim m.Boids(nbp - 1)
         Dim i As Integer
+        Dim lv As Integer
         For i = 0 To nbp - 1
             m.Boids(i).center.X = Rnd() * L
             m.Boids(i).center.Y = Rnd() * H
             m.Boids(i).Rayon = Rnd() * (rmax - rmin) + rmin
-            Dim v As Double
-            v = Rnd() * (vmax - vmin) + vmin
-            m.Boids(i).vitesse.X = Rnd() - 0.5
-            m.Boids(i).vitesse.Y = Rnd() - 0.5
-            normaliser(m.Boids(i).vitesse)
-            m.Boids(i).vitesse = mult(m.Boids(i).vitesse, v)
+            lv = Rnd() * (vmax - vmin) + vmin
+            m.Boids(i).orientation = Rnd() * (2 * Math.PI) - Math.PI
+            m.Boids(i).vitesse.X = lv * Math.Cos(m.Boids(i).orientation)
+            m.Boids(i).vitesse.Y = lv * Math.Sin(m.Boids(i).orientation)
+            
         Next
     End Sub
-    Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
+    Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs)
         afficherMonde()
-       
+
 
 
         uupdate(M, 0.05)
