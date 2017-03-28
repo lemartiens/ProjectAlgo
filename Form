@@ -1,0 +1,86 @@
+Public Class Form1
+    Dim L As Double
+    Dim H As Double
+    Dim vmax As Double
+    Dim vmin As Double
+    Dim rmin As Double
+    Dim rmax As Double
+    Dim nbp As Integer
+    Dim inf As Integer
+    Dim WithEvents timer As Timer
+    Dim M As monde
+    Dim feuille As Bitmap
+    Dim dessin As Graphics
+    Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
+        nbp = CInt(NbPoissonsTxt.Text)
+        rmin = 2
+        rmax = 10
+        vmin = 2
+        vmax = 10
+        H = 500
+        L = 500
+        feuille = New Bitmap(250, 500)
+        dessin = Graphics.FromImage(feuille)
+        PictureBox1.Image = feuille
+        Randomize()
+        initialiser(M)
+        initprop(M, nbp, inf)
+
+
+
+        Timer1.Interval = 10
+        Timer1.Start()
+    End Sub
+    Private Sub afficherMonde()
+        feuille = New Bitmap(500, 500)
+        dessin = Graphics.FromImage(feuille)
+        
+
+        propagation(M)
+        uupdatevit(M, 0.01, nbp)
+        PictureBox1.Image = feuille
+
+    End Sub
+    Private Sub initialiser(ByRef m As monde)
+        ReDim m.Particules(nbp - 1)
+        Dim i As Integer
+        For i = 0 To nbp - 1
+            m.Boids(i).center.X = Rnd() * L
+            m.Boids(i).center.Y = Rnd() * H
+            m.Boids(i).Rayon = Rnd() * (rmax - rmin) + rmin
+            Dim v As Double
+            v = Rnd() * (vmax - vmin) + vmin
+            m.Boids(i).vitesse.X = Rnd() - 0.5
+            m.Boids(i).vitesse.Y = Rnd() - 0.5
+            normaliser(m.Boids(i).vitesse)
+            m.Boids(i).vitesse = mult(m.Boids(i).vitesse, v)
+        Next
+    End Sub
+    Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs) Handles Timer1.Tick
+        afficherMonde()
+       
+
+
+        uupdate(M, 0.05)
+
+
+    End Sub
+    Private Sub BtnActu_Click(sender As System.Object, e As System.EventArgs) Handles BtnActu.Click
+        nbp = CInt(NbPoissonsTxt.Text)
+
+        rmin = 2
+        rmax = 10
+        vmin = CInt(VitesseMinTxt.Text)
+        vmax = CInt(VitesseMaxTxt.Text)
+        H = 500
+        L = 500
+        Randomize()
+        initialiser(M)
+        initprop(M, nbp, inf)
+
+
+
+        Timer1.Interval = 10
+        Timer1.Start()
+    End Sub
+End Class
