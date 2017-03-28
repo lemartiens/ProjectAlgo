@@ -1,0 +1,115 @@
+Module Module1
+    Structure Vec
+        Dim X As Double
+        Dim Y As Double
+    End Structure
+    Function ajouter(ByVal A As Vec, ByVal B As Vec)
+        Dim C As Vec
+        C.X = A.X + B.X
+        C.Y = A.Y + B.Y
+        Return C
+    End Function
+
+
+    Function neg(ByVal A As Vec)
+        Dim C As Vec
+        C.X = -A.X
+        C.Y = -A.Y
+        Return C
+    End Function
+
+    Function longueurcarree(ByVal A As Vec)
+        Dim L As Double
+        L = (A.X) * (A.X) + (A.Y) * (A.Y)
+        Return L
+    End Function
+
+    Function longueur(ByVal A As Vec)
+        Dim L As Double
+        L = (longueurcarree(A)) ^ (1 / 2)
+        Return L
+    End Function
+
+    Sub normaliser(ByRef A As Vec)
+        Dim L As Double
+        L = longueur(A)
+        If L <> 0 Then
+            A.X = (A.X) * (1 / L)
+            A.Y = (A.Y) * (1 / L)
+        End If
+
+    End Sub
+
+    Function mult(ByVal A As Vec, ByVal R As Double)
+        Dim C As Vec
+        C.X = A.X * R * Rnd()
+        C.Y = A.Y * R * Rnd()
+        Return C
+    End Function
+
+    Structure Boid
+        Dim center As Vec
+        Dim vitesse As Vec
+        Dim Rayon As Double
+        Dim RayonRepulsion As Double
+        Dim RayonOrientation As Double
+    End Structure
+
+    Sub avancer(ByRef a As Boid, ByVal dt As Double)
+        a.center = ajouter(a.center, mult(a.vitesse, dt))
+        If a.center.X > 500 Then
+            a.center.X = 0
+        End If
+        If a.center.X < 0 Then
+            a.center.X = 500
+        End If
+        If a.center.Y > 500 Then
+            a.center.Y = 0
+        End If
+        If a.center.Y < 0 Then
+            a.center.Y = 500
+        End If
+    End Sub
+
+    Structure monde
+        Dim Boids() As Boid
+    End Structure
+
+    Sub uupdate(ByRef m As monde, ByVal dt As Double)
+        Dim i As Double
+
+
+        For i = 0 To m.Boids.GetLength(0) - 1
+            avancer(m.Boids(i), dt)
+        Next
+    End Sub
+    Sub uupdatevit(ByRef m As monde, ByVal dt As Double, n As Integer)
+        Dim i As Integer
+        Dim j As Integer
+        Dim K As Vec
+        Dim L As Vec
+        Dim R As Vec
+        For i = 0 To n - 1
+            For j = 0 To n - 1
+                If i <> j Then
+                    K = ajouter(m.Boids(i).center, neg(m.Boids(j).center))
+                    L = K
+                    normaliser(L)
+                    R = mult(L, dt / longueurcarree(L))
+                    m.Boids(i).vitesse = ajouter(m.Boids(i).vitesse, (R))
+
+                    K = ajouter(m.Boids(j).center, neg(m.Boids(i).center))
+                    L = K
+                    normaliser(L)
+                    R = mult(L, dt / longueurcarree(L))
+                    m.Boids(j).vitesse = ajouter(m.Boids(j).vitesse, (R))
+                End If
+            Next
+
+        Next
+
+    End Sub
+    
+
+  
+End Module
