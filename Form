@@ -87,16 +87,5 @@ Public Class Form1
     End Sub
     
       
-        Private Sub init(ByVal lig As Integer, ByVal col As Integer, ByVal pMax As Integer, ByRef g As Grille2D)
-        g.L = lig
-        g.C = col
-        ReDim g.tab(col)(lig)(pMax)
-        ReDim g.nbp(col)(lig)
-        Dim i, j As Integer
-        For i = 0 To col - 1
-            For j = 0 To lig - 1
-                g.nbp(i)(j) = 0
-            Next
-        Next
-    End Sub
+
 End Class
