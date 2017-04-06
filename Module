@@ -113,6 +113,21 @@ Module Module1
 
     End Sub
     
+    
+    'Rajout Aymerich
+    Structure Predateur
+        Dim center As Vec
+        Dim vitesse As Vec
+        Dim orientation As Double
+        Dim Rayon As Double
+        Dim RayonRepulsion As Double
+    End Structure
 
+    Structure Grille2D
+        Dim tab()()() As Integer
+        Dim L As Integer
+        Dim C As Integer
+        Dim nbp()() As Integer
+    End Structure
   
 End Module
