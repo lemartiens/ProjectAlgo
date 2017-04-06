@@ -86,6 +86,8 @@ Public Class Form1
         Timer1.Start()
     End Sub
     
+    
+    'Rajout Aymerich
     Private Sub init(ByVal lig As Integer, ByVal col As Integer, ByVal pMax As Integer, ByRef g As Grille2D)
         g.L = lig
         g.C = col
