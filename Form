@@ -7,6 +7,7 @@ Public Class Form1
     Dim rmax As Double
     Dim nbp As Integer
     Dim nbr As Integer
+    Dim mgr As Integer
     Dim WithEvents timer As Timer
     Dim M As monde
     Dim feuille As Bitmap
@@ -45,7 +46,9 @@ Public Class Form1
             dessin.DrawImage(ImaPredateur, CInt(M.Predateur(j).center.X), CInt(M.Predateur(j).center.Y), CInt(M.Predateur(j).Rayon), CInt(M.Predateur(j).Rayon))
         Next
 
-        'gloutonner(M, nbp, nbr)
+        EviterPre(M, nbr)
+        gloutonner(M, nbp, nbr, mgr)
+        lbl_PMa.Text = mgr
         follow(M, nbp)
         PictureBox1.Image = feuille
 
@@ -105,6 +108,8 @@ Public Class Form1
         Timer1.Interval = 10
         Timer1.Start()
     End Sub
+
+
 
 
 
