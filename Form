@@ -6,28 +6,26 @@ Public Class Form1
     Dim rmin As Double
     Dim rmax As Double
     Dim nbp As Integer
-    Dim inf As Integer
+    Dim nbr As Integer
     Dim WithEvents timer As Timer
     Dim M As monde
     Dim feuille As Bitmap
     Dim dessin As Graphics
 
-    Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
+    Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         nbp = CInt(NbPoissonsTxt.Text)
-        rmin = 2
-        rmax = 10
-        vmin = 2
-        vmax = 10
+        nbr = CInt(NbPredateurTxt.Text)
+        rmin = 30
+        rmax = 50
+        vmin = CInt(VitesseMinTxt.Text)
+        vmax = CInt(VitesseMaxTxt.Text)
         H = 500
         L = 500
-        feuille = New Bitmap(250, 500)
+        feuille = New Bitmap(500, 500)
         dessin = Graphics.FromImage(feuille)
         PictureBox1.Image = feuille
         Randomize()
         initialiser(M)
-
-
-
 
         Timer1.Interval = 10
         Timer1.Start()
@@ -36,71 +34,81 @@ Public Class Form1
     Private Sub afficherMonde()
         feuille = New Bitmap(500, 500)
         dessin = Graphics.FromImage(feuille)
-        
+        Dim i As Integer
+        Dim ImaPoisson As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
+        For i = 0 To nbp - 1
+            dessin.DrawImage(ImaPoisson, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
+        Next
+        Dim j As Integer
+        Dim ImaPredateur As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\requin.png")
+        For j = 0 To nbr - 1
+            dessin.DrawImage(ImaPredateur, CInt(M.Predateur(j).center.X), CInt(M.Predateur(j).center.Y), CInt(M.Predateur(j).Rayon), CInt(M.Predateur(j).Rayon))
+        Next
 
-
-        uupdatevit(M, 0.01, nbp)
+        follow(M, nbp)
         PictureBox1.Image = feuille
-       
+
     End Sub
     Private Sub initialiser(ByRef m As monde)
         ReDim m.Boids(nbp - 1)
+        ReDim m.Predateur(nbr - 1)
+        Dim j As Integer
         Dim i As Integer
-        Dim lv As Integer
+        For j = 0 To nbr - 1
+            m.Predateur(j).center.X = Rnd() * L
+            m.Predateur(j).center.Y = Rnd() * H
+            m.Predateur(j).Rayon = Rnd() * (rmax - rmin) + rmin
+            m.Predateur(j).RayonGlouton = Rnd() * m.Predateur(j).Rayon
+            Dim v As Double
+            v = Rnd() * (vmax - vmin) + vmin
+            m.Predateur(j).vitesse.X = Rnd() - 0.5
+            m.Predateur(j).vitesse.Y = Rnd() - 0.5
+            normaliser(m.Predateur(j).vitesse)
+            m.Predateur(j).vitesse = mult(m.Predateur(j).vitesse, v)
+            m.Predateur(j).orientation = Rnd() * 2 * Math.PI
+        Next
         For i = 0 To nbp - 1
             m.Boids(i).center.X = Rnd() * L
             m.Boids(i).center.Y = Rnd() * H
             m.Boids(i).Rayon = Rnd() * (rmax - rmin) + rmin
-            lv = Rnd() * (vmax - vmin) + vmin
-            m.Boids(i).orientation = Rnd() * (2 * Math.PI) - Math.PI
-            m.Boids(i).vitesse.X = lv * Math.Cos(m.Boids(i).orientation)
-            m.Boids(i).vitesse.Y = lv * Math.Sin(m.Boids(i).orientation)
-            
+            m.Boids(i).RayonOrientation = Rnd() * m.Boids(i).Rayon
+            m.Boids(i).RayonRepulsion = Rnd() * m.Boids(i).RayonOrientation
+            Dim z As Double
+            z = Rnd() * (vmax - vmin) + vmin
+            m.Boids(i).vitesse.X = Rnd() - 0.5
+            m.Boids(i).vitesse.Y = Rnd() - 0.5
+            normaliser(m.Boids(i).vitesse)
+            m.Boids(i).vitesse = mult(m.Boids(i).vitesse, z)
+            m.Boids(i).orientation = Rnd() * 2 * Math.PI
         Next
     End Sub
-    Private Sub Timer1_Tick(sender As System.Object, e As System.EventArgs)
+
+    Private Sub Timer1_Tick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Timer1.Tick
         afficherMonde()
-
-
-
-        uupdate(M, 0.05)
-
+        uupdate(M, 1)
 
     End Sub
-    Private Sub BtnActu_Click(sender As System.Object, e As System.EventArgs) Handles BtnActu.Click
-        nbp = CInt(NbPoissonsTxt.Text)
 
-        rmin = 2
-        rmax = 10
+    Private Sub BtnActu_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles BtnActu.Click
+        nbp = CInt(NbPoissonsTxt.Text)
+        nbr = CInt(NbPredateurTxt.Text)
+
+        rmin = 30
+        rmax = 50
         vmin = CInt(VitesseMinTxt.Text)
         vmax = CInt(VitesseMaxTxt.Text)
         H = 500
         L = 500
         Randomize()
         initialiser(M)
-        initprop(M, nbp, inf)
-
-
 
         Timer1.Interval = 10
         Timer1.Start()
     End Sub
-    
-    
-    'Rajout Aymerich
-    Private Sub init(ByVal lig As Integer, ByVal col As Integer, ByVal pMax As Integer, ByRef g As Grille2D)
-        g.L = lig
-        g.C = col
-        ReDim g.tab(col)(lig)(pMax)
-        ReDim g.nbp(col)(lig)
-        Dim i, j As Integer
-        For i = 0 To col - 1
-            For j = 0 To lig - 1
-                g.nbp(i)(j) = 0
-            Next
-        Next
-    End Sub
-    
-      
+
+
+
+
+
 
 End Class
