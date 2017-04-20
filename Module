@@ -210,78 +210,85 @@ Module Module1
 
     End Sub
 
-    Sub gloutonner(ByRef m As monde, ByVal n As Integer, ByVal z As Integer)
-        'Cette procédure comprend le fait de choisir sa proie, la traquer, la manger et éviter ses congénères.
-        Dim mgr As Integer = 0
+    Sub gloutonner(ByRef m As monde, ByRef n As Integer, ByVal z As Integer, ByRef op As Integer)
+        'Cette procédure comprend le fait de choisir sa proie, la traquer et la manger.
         Dim i As Integer
         Dim j As Integer
         Dim K As Vec
         Dim P As Vec
         Dim O As Vec
-        Dim AZ As Vec
         Dim x As Integer
         Dim a As Integer
         Dim b As Integer
+        Dim h As Integer
 
         For i = 0 To z - 1
-            'Eviter ses congénères
+            '   Choisir sa proie, la traquer, la manger.
+            '3)Manger sa proie
             x = 0
-            For j = 0 To z - 2
-                If i <> j Then
-                    P = ajouter(m.Predateur(i).center, neg(m.Predateur(j).center))
-                    If longueur(P) < (Rnd() * m.Predateur(i).RayonGlouton) Then
-                        x = j
-                    End If
-                End If
-            Next
-            m.Predateur(i).orientation = -m.Predateur(x).orientation
-            'Choisir sa proie, la traquer, la manger.
-            x = 0
-            For j = 0 To n - mgr - 1
+            For j = 0 To n - 1
                 K = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
                 If longueur(K) < m.Predateur(i).RayonGlouton Then
-                    Dim h As Integer
                     For h = j + 1 To n - 2
                         m.Boids(j) = m.Boids(j + 1)
                     Next
-                    mgr = mgr + 1
-                    ReDim Preserve m.Boids(n - mgr)
+                    op = op + 1
+                    n = n - 1
+                    ReDim Preserve m.Boids(n)
                 End If
             Next
-            For j = 0 To n - 2 - mgr
-                O = ajouter(m.Predateur(i).center, neg(m.Boids(x).center))
+            '1)Choisir sa proie
+            For j = 0 To n - 2 - op
+                O = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
                 P = ajouter(m.Predateur(i).center, neg(m.Boids(j + 1).center))
                 If longueur(O) < longueur(P) Then
                     x = j
                 End If
             Next
-            If longueur(O) < (10 * Rnd() * m.Predateur(i).RayonGlouton) Then
+            '2)Traquer sa proie
+            If longueur(O) < (2 * m.Predateur(i).Rayon) Then
                 a = (m.Boids(x).center.X - m.Predateur(i).center.X)
                 b = (m.Boids(x).center.Y - m.Predateur(i).center.Y)
                 If a > 0 Then
                     If b > 0 Then
-                        m.Predateur(i).orientation = (Math.Acos(a))
-                    ElseIf b < 0 Then
                         m.Predateur(i).orientation = (Math.Asin(b))
+                    ElseIf b < 0 Then
+                        m.Predateur(i).orientation = (Math.Acos(a))
                     ElseIf b = 0 Then
                         m.Predateur(i).orientation = 0
                     End If
                 ElseIf a < 0 Then
                     If b > 0 Then
-                        m.Predateur(i).orientation = (Math.Acos(a))
+                        m.Predateur(i).orientation = -(Math.Acos(a))
                     ElseIf b < 0 Then
-                        m.Predateur(i).orientation = -(Math.Acos(1 - b))
+                        m.Predateur(i).orientation = (Math.Acos(a))
                     ElseIf b = 0 Then
                         m.Predateur(i).orientation = Math.PI
                     End If
                 ElseIf a = 0 Then
                     If b = 1 Then
-                        m.Predateur(i).orientation = Math.PI / 2
-                    ElseIf b = -1 Then
                         m.Predateur(i).orientation = -(Math.PI / 2)
+                    ElseIf b = -1 Then
+                        m.Predateur(i).orientation = Math.PI / 2
                     End If
                 End If
             End If
+        Next
+    End Sub
+
+    Sub EviterPre(ByRef m As monde, ByVal z As Integer)
+        'Eviter ses congénères
+        Dim i As Integer
+        Dim AZ As Vec
+        For i = 0 To z - 1
+            For j = 0 To z - 1
+                If i <> j Then
+                    AZ = ajouter(m.Predateur(i).center, neg(m.Predateur(j).center))
+                    If longueur(AZ) < (m.Predateur(i).Rayon) Then
+                        m.Predateur(i).orientation = -m.Predateur(j).orientation
+                    End If
+                End If
+            Next
         Next
     End Sub
 
