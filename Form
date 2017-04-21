@@ -7,7 +7,9 @@ Public Class Form1
     Dim rmax As Double
     Dim nbp As Integer
     Dim nbr As Integer
-    Dim mgr As Integer
+    Dim nbo As Integer
+    Dim Pmgr As Integer
+    Dim OV As Integer
     Dim WithEvents timer As Timer
     Dim M As monde
     Dim feuille As Bitmap
@@ -16,10 +18,13 @@ Public Class Form1
     Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         nbp = CInt(NbPoissonsTxt.Text)
         nbr = CInt(NbPredateurTxt.Text)
+        nbo = 0
         rmin = 30
         rmax = 50
         vmin = CInt(VitesseMinTxt.Text)
         vmax = CInt(VitesseMaxTxt.Text)
+        Pmgr = 0
+        OV = 0
         H = 500
         L = 500
         feuille = New Bitmap(500, 500)
@@ -35,9 +40,11 @@ Public Class Form1
     Private Sub afficherMonde()
         feuille = New Bitmap(500, 500)
         dessin = Graphics.FromImage(feuille)
+
+
         Dim i As Integer
         Dim ImaPoisson As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
-        For i = 0 To nbp - 1 - mgr
+        For i = 0 To nbp - 1
             dessin.DrawImage(ImaPoisson, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
         Next
         Dim j As Integer
@@ -45,32 +52,32 @@ Public Class Form1
         For j = 0 To nbr - 1
             dessin.DrawImage(ImaPredateur, CInt(M.Predateur(j).center.X), CInt(M.Predateur(j).center.Y), CInt(M.Predateur(j).Rayon), CInt(M.Predateur(j).Rayon))
         Next
+        Dim k As Integer
+        Dim ImaOeuf As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\Oeuf_Yoshi.png")
+        For k = 0 To OV - 1
+            dessin.DrawImage(ImaOeuf, CInt(M.Oeuf(k).center.X), CInt(M.Oeuf(k).center.Y), CInt(M.Oeuf(k).Rayon), CInt(M.Oeuf(k).Rayon))
+        Next
+
 
         EviterPre(M, nbr)
-        gloutonner(M, nbp, nbr, mgr)
-        lbl_PMa.Text = mgr
+        'gloutonner(M, nbp, nbr, Pmgr)
+        lbl_PMa.Text = Pmgr
         follow(M, nbp)
+        Pondre(M, nbp, OV, nbo, rmax, rmin)
+        lbl_OV.Text = OV
         PictureBox1.Image = feuille
-
     End Sub
+
     Private Sub initialiser(ByRef m As monde)
         ReDim m.Boids(nbp - 1)
         ReDim m.Predateur(nbr - 1)
+        If m.Oeuf Is Nothing Then
+        Else
+            ReDim m.Oeuf(OV - 1)
+        End If
+
         Dim j As Integer
         Dim i As Integer
-        For j = 0 To nbr - 1
-            m.Predateur(j).center.X = Rnd() * L
-            m.Predateur(j).center.Y = Rnd() * H
-            m.Predateur(j).Rayon = Rnd() * (rmax - rmin) + rmin
-            m.Predateur(j).RayonGlouton = Rnd() * m.Predateur(j).Rayon
-            Dim v As Double
-            v = Rnd() * (vmax - vmin) + vmin
-            m.Predateur(j).vitesse.X = Rnd() - 0.5
-            m.Predateur(j).vitesse.Y = Rnd() - 0.5
-            normaliser(m.Predateur(j).vitesse)
-            m.Predateur(j).vitesse = mult(m.Predateur(j).vitesse, v)
-            m.Predateur(j).orientation = Rnd() * 2 * Math.PI
-        Next
         For i = 0 To nbp - 1
             m.Boids(i).center.X = Rnd() * L
             m.Boids(i).center.Y = Rnd() * H
@@ -85,6 +92,19 @@ Public Class Form1
             m.Boids(i).vitesse = mult(m.Boids(i).vitesse, z)
             m.Boids(i).orientation = Rnd() * 2 * Math.PI
         Next
+        For j = 0 To nbr - 1
+            m.Predateur(j).center.X = Rnd() * L
+            m.Predateur(j).center.Y = Rnd() * H
+            m.Predateur(j).Rayon = Rnd() * (rmax - rmin) + rmin
+            m.Predateur(j).RayonGlouton = Rnd() * m.Predateur(j).Rayon
+            Dim v As Double
+            v = Rnd() * (vmax - vmin) + vmin
+            m.Predateur(j).vitesse.X = Rnd() - 0.5
+            m.Predateur(j).vitesse.Y = Rnd() - 0.5
+            normaliser(m.Predateur(j).vitesse)
+            m.Predateur(j).vitesse = mult(m.Predateur(j).vitesse, v)
+            m.Predateur(j).orientation = Rnd() * 2 * Math.PI
+        Next
     End Sub
 
     Private Sub Timer1_Tick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Timer1.Tick
@@ -96,10 +116,13 @@ Public Class Form1
     Private Sub BtnActu_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles BtnActu.Click
         nbp = CInt(NbPoissonsTxt.Text)
         nbr = CInt(NbPredateurTxt.Text)
+        nbo = 0
         rmin = 30
         rmax = 50
         vmin = CInt(VitesseMinTxt.Text)
         vmax = CInt(VitesseMaxTxt.Text)
+        Pmgr = 0
+        OV = 0
         H = 500
         L = 500
         Randomize()
@@ -117,4 +140,3 @@ Public Class Form1
 
 
 End Class
-
