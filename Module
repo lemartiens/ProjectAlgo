@@ -64,15 +64,24 @@ Module Module1
         Dim RayonGlouton As Double
     End Structure
 
+    Structure Oeuf
+        Dim center As Vec
+        Dim vitesse As Vec
+        Dim orientation As Double
+        Dim Rayon As Double
+        Dim RayonSurvie As Double
+    End Structure
+
     Structure monde
         Dim Boids() As Boid
         Dim Predateur() As Predateur
+        Dim Oeuf() As Oeuf
     End Structure
 
     Sub avancerB(ByRef a As Boid, ByVal dt As Double)
-        normaliser(a.vitesse)
         a.vitesse.X = longueur(a.vitesse) * Math.Cos(a.orientation)
         a.vitesse.Y = longueur(a.vitesse) * Math.Sin(a.orientation)
+        normaliser(a.vitesse)
         a.center = ajouter(a.center, mult(a.vitesse, dt))
         Dim u As Boid = a
         If a.center.X > (500 - a.Rayon) Then
@@ -147,8 +156,8 @@ Module Module1
             End If
         End If
         Dim v As Predateur = a
-        If a.center.X < a.Rayon Then
-            a.center.X = a.Rayon
+        If a.center.X < 0 Then
+            a.center.X = 0
             If Math.Sin(a.orientation) > 0 Then
                 v.orientation = (Math.PI - a.orientation)
                 v.vitesse.X = longueur(v.vitesse) * Math.Cos(v.orientation)
@@ -171,8 +180,8 @@ Module Module1
             a = w
         End If
         Dim x As Predateur = a
-        If a.center.Y < a.Rayon Then
-            a.center.Y = a.Rayon
+        If a.center.Y < 0 Then
+            a.center.Y = 0
             x.orientation = (-a.orientation)
             x.vitesse.Y = longueur(x.vitesse) * Math.Sin(x.orientation)
             a = x
@@ -188,9 +197,17 @@ Module Module1
         For j = 0 To m.Predateur.GetLength(0) - 1
             avancerP(m.Predateur(j), dt)
         Next
+        Dim k As Double
+        If m.Oeuf Is Nothing Then
+        Else
+            For k = 0 To m.Oeuf.GetLength(0) - 1
+                avancerO(m.Oeuf(k), dt)
+            Next
+        End If
     End Sub
 
     Sub follow(ByRef m As monde, ByVal n As Integer)
+        'Pour former un banc de poissons
         Dim i As Integer
         Dim j As Integer
         Dim K As Vec
@@ -207,10 +224,9 @@ Module Module1
                 End If
             Next
         Next
-
     End Sub
 
-    Sub gloutonner(ByRef m As monde, ByRef n As Integer, ByVal z As Integer, ByRef op As Integer)
+    Sub gloutonner(ByRef m As monde, ByRef nbp As Integer, ByVal nbr As Integer, ByRef Pmgr As Integer)
         'Cette procédure comprend le fait de choisir sa proie, la traquer et la manger.
         Dim i As Integer
         Dim j As Integer
@@ -222,23 +238,23 @@ Module Module1
         Dim b As Integer
         Dim h As Integer
 
-        For i = 0 To z - 1
+        For i = 0 To nbr - 1
             '   Choisir sa proie, la traquer, la manger.
             '3)Manger sa proie
             x = 0
-            For j = 0 To n - 1
+            For j = 0 To nbp - 1
                 K = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
                 If longueur(K) < m.Predateur(i).RayonGlouton Then
-                    For h = j + 1 To n - 2
+                    For h = j + 1 To nbp - 2
                         m.Boids(j) = m.Boids(j + 1)
                     Next
-                    op = op + 1
-                    n = n - 1
-                    ReDim Preserve m.Boids(n)
+                    Pmgr = Pmgr + 1
+                    nbp = nbp - 1
+                    ReDim Preserve m.Boids(nbp - 1)
                 End If
             Next
             '1)Choisir sa proie
-            For j = 0 To n - 2 - op
+            For j = 0 To nbp - 2
                 O = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
                 P = ajouter(m.Predateur(i).center, neg(m.Boids(j + 1).center))
                 If longueur(O) < longueur(P) Then
@@ -276,24 +292,47 @@ Module Module1
         Next
     End Sub
 
-    Sub EviterPre(ByRef m As monde, ByVal z As Integer)
+    Sub EviterPre(ByRef m As monde, ByVal nbr As Integer)
         'Eviter ses congénères
         Dim i As Integer
-        Dim AZ As Vec
-        For i = 0 To z - 1
-            For j = 0 To z - 1
+        Dim K As Vec
+        For i = 0 To nbr - 1
+            For j = 0 To nbr - 1
                 If i <> j Then
-                    AZ = ajouter(m.Predateur(i).center, neg(m.Predateur(j).center))
-                    If longueur(AZ) < (m.Predateur(i).Rayon) Then
-                        m.Predateur(i).orientation = -m.Predateur(j).orientation
+                    K = ajouter(m.Predateur(i).center, neg(m.Predateur(j).center))
+                    If longueur(K) < (m.Predateur(i).Rayon) Then
+                        If m.Predateur(i).center.X > 0 Or m.Predateur(i).center.Y > 0 Or m.Predateur(i).center.X < 500 Or m.Predateur(i).center.X < 500 Then
+                            m.Predateur(i).orientation = -m.Predateur(i).orientation
+                        End If
                     End If
                 End If
             Next
         Next
     End Sub
 
+    Sub Pondre(ByRef m As monde, ByVal nbp As Integer, ByRef OV As Integer, ByRef nbo As Integer, ByVal rmax As Integer, ByVal rmin As Integer)
+        Dim a As Integer
+        If (Int(Rnd() * 100)) = (Int(Rnd() * 100)) Then
+            a = Int(Rnd() * nbp)
+            OV = OV + 1
+            ReDim m.Oeuf(OV - 1)
+            m.Oeuf(OV - 1).center = m.Boids(a).center
+            m.Oeuf(OV - 1).Rayon = Rnd() * 0.001 * (rmax - rmin) + rmin
+            nbo = nbo + 1
+        End If
+    End Sub
 
-
+    Sub avancerO(ByRef a As Oeuf, ByVal dt As Double)
+        a.orientation = Math.PI / 2
+        Dim z As Double
+        z = Rnd() * 20 + 50
+        a.vitesse.X = Rnd() - 0.5
+        a.vitesse.Y = Rnd() - 0.5
+        normaliser(a.vitesse)
+        a.vitesse = mult(a.vitesse, z)
+        a.vitesse.X = longueur(a.vitesse) * Math.Cos(a.orientation)
+        a.vitesse.Y = longueur(a.vitesse) * Math.Sin(a.orientation)
+    End Sub
 
 
 End Module
