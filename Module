@@ -190,9 +190,12 @@ Module Module1
 
     Sub uupdate(ByRef m As monde, ByVal dt As Double)
         Dim i As Double
-        For i = 0 To m.Boids.GetLength(0) - 1
-            avancerB(m.Boids(i), dt)
-        Next
+        If m.Boids Is Nothing Then
+        Else
+            For i = 0 To m.Boids.GetLength(0) - 1
+                avancerB(m.Boids(i), dt)
+            Next
+        End If
         Dim j As Double
         For j = 0 To m.Predateur.GetLength(0) - 1
             avancerP(m.Predateur(j), dt)
@@ -206,27 +209,39 @@ Module Module1
         End If
     End Sub
 
-    Sub follow(ByRef m As monde, ByVal n As Integer)
+    Sub follow(ByRef m As monde, ByVal nbp As Integer)
         'Pour former un banc de poissons
         Dim i As Integer
         Dim j As Integer
         Dim K As Vec
-        For i = 0 To n - 1
-            For j = 0 To n - 1
+        For i = 0 To nbp - 1
+            For j = 0 To nbp - 1
                 If i <> j Then
                     K = ajouter(m.Boids(i).center, neg(m.Boids(j).center))
-                    If longueur(K) < m.Boids(i).RayonOrientation Then
-                        m.Boids(i).orientation = m.Boids(j).orientation
-                    End If
                     If longueur(K) < m.Boids(i).RayonRepulsion Then
-                        m.Boids(i).orientation = -m.Boids(j).orientation
+                        If m.Boids(i).center.X > 0 And m.Boids(i).center.Y > 0 And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) Then
+                            If m.Boids(j).orientation < 0 Then
+                                m.Boids(i).orientation = Math.PI * Rnd()
+                                m.Boids(j).orientation = -Math.PI + m.Boids(i).orientation
+                            ElseIf m.Boids(j).orientation >= 0 Then
+                                m.Boids(i).orientation = -Math.PI * Rnd()
+                                m.Boids(j).orientation = Math.PI - m.Boids(i).orientation
+                            End If
+                            m.Boids(i).vitesse.X = longueur(m.Boids(i).vitesse) * Math.Cos(m.Boids(i).orientation)
+                            m.Boids(i).vitesse.Y = longueur(m.Boids(i).vitesse) * Math.Sin(m.Boids(i).orientation)
+                            m.Boids(j).vitesse.X = longueur(m.Boids(j).vitesse) * Math.Cos(m.Boids(j).orientation)
+                            m.Boids(j).vitesse.Y = longueur(m.Boids(j).vitesse) * Math.Sin(m.Boids(j).orientation)
+                        End If
+                    End If
+                    If longueur(K) < (m.Boids(i).RayonOrientation) Then
+                        m.Boids(i).orientation = m.Boids(j).orientation
                     End If
                 End If
             Next
         Next
     End Sub
 
-    Sub gloutonner(ByRef m As monde, ByRef nbp As Integer, ByVal nbr As Integer, ByRef Pmgr As Integer)
+    Sub gloutonner(ByRef m As monde, ByRef nbp As Integer, ByVal nbr As Integer, ByRef Pmgr As Integer, ByVal vmax As Integer, ByVal vmin As Integer)
         'Cette procédure comprend le fait de choisir sa proie, la traquer et la manger.
         Dim i As Integer
         Dim j As Integer
@@ -234,75 +249,93 @@ Module Module1
         Dim P As Vec
         Dim O As Vec
         Dim x As Integer
-        Dim a As Integer
-        Dim b As Integer
+        Dim a As Vec
         Dim h As Integer
+        Dim Z As Vec
+        Dim tr As Integer = 1
 
         For i = 0 To nbr - 1
             '   Choisir sa proie, la traquer, la manger.
             '3)Manger sa proie
-            x = 0
-            For j = 0 To nbp - 1
-                K = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
-                If longueur(K) < m.Predateur(i).RayonGlouton Then
-                    For h = j + 1 To nbp - 2
-                        m.Boids(j) = m.Boids(j + 1)
-                    Next
-                    Pmgr = Pmgr + 1
-                    nbp = nbp - 1
-                    ReDim Preserve m.Boids(nbp - 1)
-                End If
-            Next
-            '1)Choisir sa proie
-            For j = 0 To nbp - 2
-                O = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
-                P = ajouter(m.Predateur(i).center, neg(m.Boids(j + 1).center))
-                If longueur(O) < longueur(P) Then
-                    x = j
-                End If
-            Next
-            '2)Traquer sa proie
-            If longueur(O) < (2 * m.Predateur(i).Rayon) Then
-                a = (m.Boids(x).center.X - m.Predateur(i).center.X)
-                b = (m.Boids(x).center.Y - m.Predateur(i).center.Y)
-                If a > 0 Then
-                    If b > 0 Then
-                        m.Predateur(i).orientation = (Math.Asin(b))
-                    ElseIf b < 0 Then
-                        m.Predateur(i).orientation = (Math.Acos(a))
-                    ElseIf b = 0 Then
-                        m.Predateur(i).orientation = 0
+            If m.Boids Is Nothing Then
+            Else
+                For j = 0 To nbp - 1
+                    K = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
+                    If longueur(K) < m.Predateur(i).RayonGlouton Then
+                        For h = j To nbp - 2
+                            m.Boids(h) = m.Boids(h + 1)
+                        Next
+                        Pmgr = Pmgr + 1
+                        nbp = nbp - 1
+                        ReDim Preserve m.Boids(nbp)
                     End If
-                ElseIf a < 0 Then
-                    If b > 0 Then
-                        m.Predateur(i).orientation = -(Math.Acos(a))
-                    ElseIf b < 0 Then
-                        m.Predateur(i).orientation = (Math.Acos(a))
-                    ElseIf b = 0 Then
-                        m.Predateur(i).orientation = Math.PI
+                Next
+
+                '1)Choisir sa proie
+                x = 0
+                For j = 0 To nbp - 2
+                    O = ajouter(m.Predateur(i).center, neg(m.Boids(j).center))
+                    P = ajouter(m.Predateur(i).center, neg(m.Boids(j + 1).center))
+                    If longueur(O) < longueur(P) Then
+                        x = j
                     End If
-                ElseIf a = 0 Then
-                    If b = 1 Then
-                        m.Predateur(i).orientation = -(Math.PI / 2)
-                    ElseIf b = -1 Then
-                        m.Predateur(i).orientation = Math.PI / 2
+                Next
+
+                '2)Traquer sa proie
+                Z = ajouter(m.Predateur(i).center, neg(m.Boids(x).center))
+                If longueur(Z) < (Rnd() * 3 * m.Predateur(i).Rayon) Then
+                    a = ajouter(m.Boids(x).center, neg(m.Predateur(i).center))
+                    If a.X > 0 Then
+                        If a.Y > 0 Then
+                            m.Predateur(i).orientation = (Math.Acos(a.X / longueur(Z)))
+                        ElseIf a.Y < 0 Then
+                            m.Predateur(i).orientation = (Math.Asin(a.Y / longueur(Z)))
+                        ElseIf a.Y = 0 Then
+                            m.Predateur(i).orientation = 0
+                        End If
+                    ElseIf a.X < 0 Then
+                        If a.Y > 0 Then
+                            m.Predateur(i).orientation = (Math.Acos(a.X / longueur(Z)))
+                        ElseIf a.Y < 0 Then
+                            m.Predateur(i).orientation = -(Math.Acos(a.X / longueur(Z)))
+                        ElseIf a.Y = 0 Then
+                            m.Predateur(i).orientation = Math.PI
+                        End If
+                    ElseIf a.X = 0 Then
+                        If a.Y = 1 Then
+                            m.Predateur(i).orientation = (Math.PI / 2)
+                        ElseIf a.Y = -1 Then
+                            m.Predateur(i).orientation = -(Math.PI / 2)
+                        End If
                     End If
+                    m.Predateur(i).vitesse.X = longueur(Z) * Math.Cos(m.Boids(x).orientation)
+                    m.Predateur(i).vitesse.Y = longueur(Z) * Math.Sin(m.Boids(x).orientation)
                 End If
             End If
         Next
     End Sub
 
     Sub EviterPre(ByRef m As monde, ByVal nbr As Integer)
-        'Eviter ses congénères
+        'Eviter ses congénères prédateurs
         Dim i As Integer
         Dim K As Vec
         For i = 0 To nbr - 1
             For j = 0 To nbr - 1
                 If i <> j Then
                     K = ajouter(m.Predateur(i).center, neg(m.Predateur(j).center))
-                    If longueur(K) < (m.Predateur(i).Rayon) Then
-                        If m.Predateur(i).center.X > 0 Or m.Predateur(i).center.Y > 0 Or m.Predateur(i).center.X < 500 Or m.Predateur(i).center.X < 500 Then
-                            m.Predateur(i).orientation = -m.Predateur(i).orientation
+                    If longueur(K) < (Rnd() * m.Predateur(i).Rayon) Then
+                        If m.Predateur(i).center.X > 0 And m.Predateur(i).center.Y > 0 And m.Predateur(i).center.X < (500 - m.Predateur(i).Rayon) And m.Predateur(i).center.X < (500 - m.Predateur(i).Rayon) Then
+                            If m.Predateur(j).orientation < 0 Then
+                                m.Predateur(i).orientation = Math.PI * Rnd()
+                                m.Predateur(j).orientation = -Math.PI + m.Predateur(i).orientation
+                            ElseIf m.Predateur(j).orientation >= 0 Then
+                                m.Predateur(i).orientation = -Math.PI * Rnd()
+                                m.Predateur(j).orientation = Math.PI - m.Predateur(i).orientation
+                            End If
+                            m.Predateur(i).vitesse.X = longueur(m.Predateur(i).vitesse) * Math.Cos(m.Predateur(i).orientation)
+                            m.Predateur(i).vitesse.Y = longueur(m.Predateur(i).vitesse) * Math.Sin(m.Predateur(i).orientation)
+                            m.Predateur(j).vitesse.X = longueur(m.Predateur(j).vitesse) * Math.Cos(m.Predateur(j).orientation)
+                            m.Predateur(j).vitesse.Y = longueur(m.Predateur(j).vitesse) * Math.Sin(m.Predateur(j).orientation)
                         End If
                     End If
                 End If
@@ -312,27 +345,29 @@ Module Module1
 
     Sub Pondre(ByRef m As monde, ByVal nbp As Integer, ByRef OV As Integer, ByRef nbo As Integer, ByVal rmax As Integer, ByVal rmin As Integer)
         Dim a As Integer
-        If (Int(Rnd() * 100)) = (Int(Rnd() * 100)) Then
-            a = Int(Rnd() * nbp)
-            OV = OV + 1
-            ReDim m.Oeuf(OV - 1)
-            m.Oeuf(OV - 1).center = m.Boids(a).center
-            m.Oeuf(OV - 1).Rayon = Rnd() * 0.001 * (rmax - rmin) + rmin
-            nbo = nbo + 1
+        If m.Boids Is Nothing Then
+        Else
+            If (Int(Rnd() * 100)) = (Int(Rnd() * 100)) Then
+                a = Int(Rnd() * nbp)
+                OV = OV + 1
+                ReDim m.Oeuf(OV - 1)
+                m.Oeuf(OV - 1).center = m.Boids(a).center
+                m.Oeuf(OV - 1).Rayon = (10 ^ -5) * (rmax - rmin) + rmin
+                nbo = nbo + 1
+
+                m.Oeuf(OV - 1).orientation = Math.PI / 2
+                m.Oeuf(OV - 1).vitesse.X = longueur(m.Oeuf(OV - 1).vitesse) * Math.Cos(m.Oeuf(OV - 1).orientation)
+                m.Oeuf(OV - 1).vitesse.Y = longueur(m.Oeuf(OV - 1).vitesse) * Math.Sin(m.Oeuf(OV - 1).orientation)
+            End If
         End If
     End Sub
 
     Sub avancerO(ByRef a As Oeuf, ByVal dt As Double)
         a.orientation = Math.PI / 2
-        Dim z As Double
-        z = Rnd() * 20 + 50
-        a.vitesse.X = Rnd() - 0.5
-        a.vitesse.Y = Rnd() - 0.5
-        normaliser(a.vitesse)
-        a.vitesse = mult(a.vitesse, z)
         a.vitesse.X = longueur(a.vitesse) * Math.Cos(a.orientation)
         a.vitesse.Y = longueur(a.vitesse) * Math.Sin(a.orientation)
     End Sub
 
 
 End Module
+
