@@ -44,8 +44,13 @@ Public Class Form1
 
         Dim i As Integer
         Dim ImaPoisson As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
+        Dim ImaPoisson1 As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson1.png")
         For i = 0 To nbp - 1
+            'If Math.Cos(M.Boids(i).orientation) < 0 Then
             dessin.DrawImage(ImaPoisson, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
+            'Else
+            'dessin.DrawImage(ImaPoisson1, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
+            'End If
         Next
         Dim j As Integer
         Dim ImaPredateur As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\requin.png")
@@ -60,7 +65,7 @@ Public Class Form1
 
 
         EviterPre(M, nbr)
-        'gloutonner(M, nbp, nbr, Pmgr)
+        gloutonner(M, nbp, nbr, Pmgr, vmax, vmin)
         lbl_PMa.Text = Pmgr
         follow(M, nbp)
         Pondre(M, nbp, OV, nbo, rmax, rmin)
