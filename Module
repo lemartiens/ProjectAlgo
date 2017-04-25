@@ -219,7 +219,7 @@ Module Module1
                 If i <> j Then
                     K = ajouter(m.Boids(i).center, neg(m.Boids(j).center))
                     If longueur(K) < m.Boids(i).RayonRepulsion Then
-                        If m.Boids(i).center.X > 0 And m.Boids(i).center.Y > 0 And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) Then
+                        If m.Boids(i).center.X > 0 And m.Boids(i).center.Y > 0 And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) And m.Boids(i).center.Y < (500 - m.Boids(i).Rayon) Then
                             If m.Boids(j).orientation < 0 Then
                                 m.Boids(i).orientation = Math.PI * Rnd()
                                 m.Boids(j).orientation = -Math.PI + m.Boids(i).orientation
