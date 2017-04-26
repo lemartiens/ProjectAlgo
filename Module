@@ -99,8 +99,8 @@ Module Module1
                 a = u
             End If
         End If
-        If a.center.X < a.Rayon Then
-            u.center.X = a.Rayon
+        If a.center.X < 0 Then
+            u.center.X = 0
             If x = 0 Then
                 u.orientation = -Rnd() * (Math.PI / 2)
                 u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
@@ -117,8 +117,8 @@ Module Module1
             u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
             a = u
         End If
-        If a.center.Y < a.Rayon Then
-            u.center.Y = a.Rayon
+        If a.center.Y < 0 Then
+            u.center.Y = 0
             u.orientation = Rnd() * Math.PI
             u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
             a = u
@@ -145,8 +145,8 @@ Module Module1
                 a = u
             End If
         End If
-        If a.center.X < a.Rayon Then
-            u.center.X = a.Rayon
+        If a.center.X < 0 Then
+            u.center.X = 0
             If x = 0 Then
                 u.orientation = -Rnd() * (Math.PI / 2)
                 u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
@@ -163,8 +163,8 @@ Module Module1
             u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
             a = u
         End If
-        If a.center.Y < a.Rayon Then
-            u.center.Y = a.Rayon
+        If a.center.Y < 0 Then
+            u.center.Y = 0
             u.orientation = Rnd() * Math.PI
             u.vitesse.X = longueur(u.vitesse) * Math.Cos(u.orientation)
             a = u
@@ -192,7 +192,57 @@ Module Module1
         End If
     End Sub
 
-    Sub follow(ByRef m As monde, ByVal nbp As Integer)
+    Sub savoir(ByRef m As monde, ByVal nbp As Integer, ByVal nbr As Integer, ByRef P As Boolean, ByRef R As Boolean)
+        'Savoir si il y avait déjà un boid/predateur dans sa zone de répulsion (pour ne pas changer d'orientation à tous les "tics"
+        Dim i As Integer
+        Dim j As Integer
+        Dim K As Vec
+        Dim x As Integer
+        Dim O As Vec
+        For i = 0 To nbp - 1
+            x = 0
+            For j = 0 To nbp - 2
+                If i <> j Then
+                    O = ajouter(m.Boids(i).center, neg(m.Boids(x).center))
+                    K = ajouter(m.Boids(i).center, neg(m.Boids(j + 1).center))
+                    If longueur(O) > longueur(K) Then
+                        x = j + 1
+                    End If
+                    K = ajouter(m.Boids(i).center, neg(m.Boids(x).center))
+                    If longueur(K) < m.Boids(i).RayonRepulsion And (P = False) Then
+                        P = True
+                    ElseIf longueur(K) < m.Boids(i).RayonRepulsion And (P = True) Then
+                        P = False
+                    Else
+                        P = False
+                    End If
+                End If
+            Next
+        Next
+        For i = 0 To nbr - 1
+            x = 0
+            For j = 0 To nbr - 2
+                If i <> j Then
+                    O = ajouter(m.Predateur(i).center, neg(m.Predateur(x).center))
+                    K = ajouter(m.Predateur(i).center, neg(m.Predateur(j + 1).center))
+                    If longueur(O) > longueur(K) Then
+                        x = j + 1
+                    End If
+                    K = ajouter(m.Predateur(i).center, neg(m.Predateur(x).center))
+                    If longueur(K) < m.Predateur(i).RayonRepulsion And (R = False) Then
+                        R = True
+                    ElseIf longueur(K) < m.Predateur(i).RayonRepulsion And (R = True) Then
+                        R = False
+                    Else
+                        R = False
+                    End If
+                End If
+            Next
+        Next
+
+    End Sub
+
+    Sub follow(ByRef m As monde, ByVal nbp As Integer, ByVal P As Boolean)
         'Pour former un banc de poissons (suivre, repousser et être attiré)
         Dim i As Integer
         Dim j As Integer
@@ -201,59 +251,69 @@ Module Module1
         Dim sumS As Double
         Dim meanC As Double
         Dim meanS As Double
-        Dim V() As Integer
         Dim O As Vec
-        Dim P As Vec
+        Dim K As Vec
         Dim a As Vec
         For i = 0 To nbp - 1
             'Trouver son/ses ami(s) poisson(s) le(s) plus proche
+            x = 0
             For j = 0 To nbp - 2
                 If i <> j Then
-                    x = 0
                     O = ajouter(m.Boids(i).center, neg(m.Boids(x).center))
-                    P = ajouter(m.Boids(i).center, neg(m.Boids(j + 1).center))
-                    If longueur(O) > longueur(P) Then
+                    K = ajouter(m.Boids(i).center, neg(m.Boids(j + 1).center))
+                    If longueur(O) > longueur(K) Then
                         x = j + 1
                     End If
                 End If
             Next
             'S'éloigner s'il est trop proche
             a = ajouter(m.Boids(x).center, neg(m.Boids(i).center))
-            If longueur(a) < m.Boids(i).RayonRepulsion Then
-                If m.Boids(i).center.X > 0 And m.Boids(i).center.Y > 0 And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) And m.Boids(i).center.Y < (500 - m.Boids(i).Rayon) Then
-                    If Math.Cos(m.Boids(x).orientation) > 0 Then
-                        If Math.Sin(m.Boids(x).orientation) > 0 Then
-                            m.Boids(i).orientation = -Math.PI / 4
-                        ElseIf Math.Sin(m.Boids(x).orientation) < 0 Then
-                            m.Boids(i).orientation = Math.PI / 4
-                        Else
-                            m.Boids(i).orientation = -Math.PI / 2
-                        End If
-                    ElseIf Math.Cos(m.Boids(x).orientation) < 0 Then
-                        If Math.Sin(m.Boids(x).orientation) > 0 Then
-                            m.Boids(i).orientation = -3 * Math.PI / 4
-                        ElseIf Math.Sin(m.Boids(x).orientation) < 0 Then
-                            m.Boids(i).orientation = 3 * Math.PI / 4
-                        Else
-                            m.Boids(i).orientation = Math.PI / 2
-                        End If
-                    ElseIf Math.Cos(m.Boids(x).orientation) = 0 Then
-                        If Math.Sin(m.Boids(x).orientation) = 1 Then
-                            m.Boids(i).orientation = Math.PI
-                        ElseIf Math.Sin(m.Boids(x).orientation) = -1 Then
-                            m.Boids(i).orientation = 0
-                        End If
+            If p = True Then
+                If longueur(a) < m.Boids(i).RayonRepulsion Then
+                    If m.Boids(i).center.X > 0 And m.Boids(i).center.Y > 0 And m.Boids(i).center.X < (500 - m.Boids(i).Rayon) And m.Boids(i).center.Y < (500 - m.Boids(i).Rayon) Then
+                        m.Boids(i).orientation = -m.Boids(i).orientation
                     End If
                 End If
             End If
-            'Voguer vers le même cap que lui et les autres
+            'Rechercher son ami le plus proche
+            a = ajouter(m.Boids(x).center, neg(m.Boids(i).center))
+            If longueur(a) > m.Boids(i).RayonOrientation Then
+                If a.X > 0 Then
+                    If a.Y > 0 Then
+                        m.Boids(i).orientation = (Math.Acos(a.X / longueur(a)))
+                    ElseIf a.Y < 0 Then
+                        m.Boids(i).orientation = (Math.Asin(a.Y / longueur(a)))
+                    ElseIf a.Y = 0 Then
+                        m.Boids(i).orientation = 0
+                    End If
+                ElseIf a.X < 0 Then
+                    If a.Y > 0 Then
+                        m.Boids(i).orientation = (Math.Acos(a.X / longueur(a)))
+                    ElseIf a.Y < 0 Then
+                        m.Boids(i).orientation = -(Math.Acos(a.X / longueur(a)))
+                    ElseIf a.Y = 0 Then
+                        m.Boids(i).orientation = Math.PI
+                    End If
+                ElseIf a.X = 0 Then
+                    If a.Y = 1 Then
+                        m.Boids(i).orientation = (Math.PI / 2)
+                    ElseIf a.Y = -1 Then
+                        m.Boids(i).orientation = -(Math.PI / 2)
+                    End If
+                End If
+            End If
+        Next
+
+        'Prendre le même cap que lui et les autres
+        For i = 0 To nbp - 1
             x = -1
+            Dim V(0) As Integer
             For j = 0 To nbp - 1
                 If i <> j Then
                     O = ajouter(m.Boids(i).center, neg(m.Boids(j).center))
                     If (longueur(O) <= m.Boids(i).RayonOrientation And longueur(O) >= m.Boids(i).RayonRepulsion) Then
                         x = x + 1
-                        ReDim V(x + 1)
+                        ReDim Preserve V(x)
                         V(x) = j
                     End If
                 End If
@@ -290,36 +350,7 @@ Module Module1
                         m.Boids(i).orientation = -(Math.PI / 2)
                     End If
                 End If
-                'm.Boids(i).vitesse.X = longueur(a) * Math.Cos(m.Boids(i).orientation)
-                'm.Boids(i).vitesse.Y = longueur(a) * Math.Sin(m.Boids(i).orientation)
-            End If
-            'Rechercher son ami le plus proche
-            If longueur(a) > m.Boids(i).RayonOrientation Then
-                If a.X > 0 Then
-                    If a.Y > 0 Then
-                        m.Boids(i).orientation = (Math.Acos(a.X / longueur(a)))
-                    ElseIf a.Y < 0 Then
-                        m.Boids(i).orientation = (Math.Asin(a.Y / longueur(a)))
-                    ElseIf a.Y = 0 Then
-                        m.Boids(i).orientation = 0
-                    End If
-                ElseIf a.X < 0 Then
-                    If a.Y > 0 Then
-                        m.Boids(i).orientation = (Math.Acos(a.X / longueur(a)))
-                    ElseIf a.Y < 0 Then
-                        m.Boids(i).orientation = -(Math.Acos(a.X / longueur(a)))
-                    ElseIf a.Y = 0 Then
-                        m.Boids(i).orientation = Math.PI
-                    End If
-                ElseIf a.X = 0 Then
-                    If a.Y = 1 Then
-                        m.Boids(i).orientation = (Math.PI / 2)
-                    ElseIf a.Y = -1 Then
-                        m.Boids(i).orientation = -(Math.PI / 2)
-                    End If
-                End If
-                'm.Boids(i).vitesse.X = longueur(a) * Math.Cos(m.Boids(i).orientation)
-                'm.Boids(i).vitesse.Y = longueur(a) * Math.Sin(m.Boids(i).orientation)
+
             End If
         Next
     End Sub
@@ -431,7 +462,7 @@ line1:
         End If
     End Sub
 
-    Sub EviterPre(ByRef m As monde, ByVal nbr As Integer)
+    Sub EviterPre(ByRef m As monde, ByVal nbr As Integer, ByVal R As Boolean)
         'Eviter ses congénères prédateurs
         Dim i As Integer
         Dim j As Integer
@@ -440,9 +471,9 @@ line1:
         Dim P As Vec
         Dim a As Vec
         For i = 0 To nbr - 1
+            x = 0
             For j = 0 To nbr - 2
                 If i <> j Then
-                    x = 0
                     O = ajouter(m.Predateur(i).center, neg(m.Predateur(x).center))
                     P = ajouter(m.Predateur(i).center, neg(m.Predateur(j + 1).center))
                     If longueur(O) > longueur(P) Then
@@ -452,39 +483,11 @@ line1:
             Next
             'S'éloigner s'il est trop proche
             a = ajouter(m.Predateur(x).center, neg(m.Predateur(i).center))
-            If longueur(a) < m.Predateur(i).RayonRepulsion Then
-                If m.Predateur(i).center.X > 0 And m.Predateur(i).center.Y > 0 And m.Predateur(i).center.X < (500 - m.Predateur(i).Rayon) And m.Predateur(i).center.Y < (500 - m.Predateur(i).Rayon) Then
-                    If Math.Cos(m.Predateur(x).orientation) > 0 Then
-                        If Math.Sin(m.Predateur(x).orientation) > 0 Then
-                            If a.X > 0 Then
-                                m.Predateur(i).orientation = m.Predateur(x).orientation - Math.PI / 2
-                            ElseIf a.X < 0 Then
-                                m.Predateur(i).orientation = Math.PI / 2 - m.Predateur(x).orientation
-                            End If
-                        ElseIf Math.Sin(m.Predateur(x).orientation) < 0 Then
-                            If a.X > 0 Then
-                                m.Predateur(i).orientation = m.Predateur(x).orientation - Math.PI / 2
-                            ElseIf a.X < 0 Then
-                                m.Predateur(i).orientation = m.Predateur(x).orientation - Math.PI / 2
-                            End If
-                        End If
-                        ElseIf Math.Cos(m.Predateur(x).orientation) < 0 Then
-                            If Math.Sin(m.Predateur(x).orientation) > 0 Then
-                                m.Predateur(i).orientation = -3 * Math.PI / 4
-                            ElseIf Math.Sin(m.Predateur(x).orientation) < 0 Then
-                                m.Predateur(i).orientation = 3 * Math.PI / 4
-                            Else
-                                m.Predateur(i).orientation = Math.PI / 2
-                            End If
-                        ElseIf Math.Cos(m.Predateur(x).orientation) = 0 Then
-                            If Math.Sin(m.Predateur(x).orientation) = 1 Then
-                                m.Predateur(i).orientation = Math.PI
-                            ElseIf Math.Sin(m.Predateur(x).orientation) = -1 Then
-                                m.Predateur(i).orientation = 0
-                            End If
-                        End If
-                    'm.Predateur(i).vitesse.X = longueur(a) * Math.Cos(m.Boids(x).orientation)
-                    'm.Predateur(i).vitesse.Y = longueur(a) * Math.Sin(m.Boids(x).orientation)
+            If R = True Then
+                If longueur(a) < m.Predateur(i).RayonRepulsion Then
+                    If m.Predateur(i).center.X > 4 And m.Predateur(i).center.Y > 4 And m.Predateur(i).center.X < (496 - m.Predateur(i).Rayon) And m.Predateur(i).center.Y < (496 - m.Predateur(i).Rayon) Then
+                        m.Predateur(i).orientation = -m.Predateur(i).orientation
+                    End If
                 End If
             End If
         Next
@@ -552,6 +555,7 @@ line1:
 
 
 End Module
+
 
 
 
