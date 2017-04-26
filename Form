@@ -46,8 +46,8 @@ Public Class Form1
 
 
         Dim i As Integer
-        Dim ImaPoisson As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
-        Dim ImaPoisson2 As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\poisson1.png")
+        Dim ImaPoisson As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
+        Dim ImaPoisson2 As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\poisson1.png")
         For i = 0 To nbp - 1
             'If Math.Cos(M.Boids(i).orientation) < 0 Then
             dessin.DrawImage(ImaPoisson, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
@@ -56,12 +56,12 @@ Public Class Form1
             'End If
         Next
         Dim j As Integer
-        Dim ImaPredateur As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\requin.png")
+        Dim ImaPredateur As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\requin.png")
         For j = 0 To nbr - 1
             dessin.DrawImage(ImaPredateur, CInt(M.Predateur(j).center.X), CInt(M.Predateur(j).center.Y), CInt(M.Predateur(j).Rayon), CInt(M.Predateur(j).Rayon))
         Next
         Dim k As Integer
-        Dim ImaOeuf As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\Oeuf_Yoshi.png")
+        Dim ImaOeuf As Image = Image.FromFile("F:\WindowsApplication2\WindowsApplication2\Resources\Oeuf_Yoshi.png")
         For k = 0 To OV - 1
             dessin.DrawImage(ImaOeuf, CInt(M.Oeuf(k).center.X), CInt(M.Oeuf(k).center.Y), CInt(M.Oeuf(k).Rayon), CInt(M.Oeuf(k).Rayon))
         Next
@@ -69,10 +69,9 @@ Public Class Form1
 
         EviterPre(M, nbr)
         Pondre(M, nbp, OV, nbo, rmax, rmin, vmax, vmin)
-        'Survivre(M, OV, OM, nbp, nbr)
         Eclore(M, OV, nbp, vmax, vmin, rmax, rmin)
         gloutonner(M, nbp, nbr, Pmgr, vmax, vmin, OV, OM)
-        follow(M, nbp)
+        'follow(M, nbp)
         lbl_PMa.Text = Pmgr
         lbl_OV.Text = OV
         lbl_Pvi.Text = nbp
@@ -93,8 +92,8 @@ Public Class Form1
             m.Boids(i).center.X = Rnd() * L
             m.Boids(i).center.Y = Rnd() * H
             m.Boids(i).Rayon = Rnd() * (rmax - rmin) + rmin
-            m.Boids(i).RayonOrientation = Rnd() * m.Boids(i).Rayon
-            m.Boids(i).RayonRepulsion = Rnd() * m.Boids(i).RayonOrientation
+            m.Boids(i).RayonOrientation = (1 + Rnd() / 2) * m.Boids(i).Rayon
+            m.Boids(i).RayonRepulsion = Rnd() * (m.Boids(i).RayonOrientation - m.Boids(i).Rayon) + m.Boids(i).Rayon
             Dim z As Double
             z = Rnd() * (vmax - vmin) + vmin
             m.Boids(i).vitesse.X = Rnd() - 0.5
@@ -107,7 +106,8 @@ Public Class Form1
             m.Predateur(j).center.X = Rnd() * L
             m.Predateur(j).center.Y = Rnd() * H
             m.Predateur(j).Rayon = Rnd() * (rmax - rmin) + rmin
-            m.Predateur(j).RayonGlouton = Rnd() * m.Predateur(j).Rayon
+            m.Predateur(j).RayonRepulsion = (1 + Rnd() / 2) * m.Predateur(j).Rayon
+            m.Predateur(j).RayonGlouton = Rnd() * (m.Predateur(j).RayonRepulsion - m.Predateur(j).Rayon) + m.Predateur(j).Rayon
             Dim v As Double
             v = Rnd() * (vmax - vmin) + vmin
             m.Predateur(j).vitesse.X = Rnd() - 0.5
@@ -120,7 +120,7 @@ Public Class Form1
 
     Private Sub Timer1_Tick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Timer1.Tick
         afficherMonde()
-        uupdate(M, 2, nbp)
+        uupdate(M, 1.5)
 
     End Sub
 
@@ -144,11 +144,7 @@ Public Class Form1
     End Sub
 
 
-    Private Sub Camera()
-
-
-
-    End Sub
+    
 
 
 
