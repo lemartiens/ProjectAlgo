@@ -1,157 +1,434 @@
 Public Class Form1
-    Dim L As Double
-    Dim H As Double
+    Dim L As Double = 1200
+    Dim H As Double = 520
     Dim vmax As Double
     Dim vmin As Double
     Dim rmin As Double
     Dim rmax As Double
     Dim nbp As Integer
     Dim nbr As Integer
-    Dim nbo As Integer
-    Dim Pmgr As Integer
-    Dim OV As Integer
-    Dim OM As Integer
-    Dim WithEvents timer As Timer
     Dim M As monde
     Dim feuille As Bitmap
     Dim dessin As Graphics
+    Dim OV As Integer = 0
+    Dim Pmgr As Integer = 0
+
+    Dim zoom As Double = 1
+    Dim pbHeight As Double = 520
+    Dim pbWidth As Double = 1200
+    Dim ImaPoisson As Image = Image.FromFile("..\..\Resources\poisson.png")
+    Dim ImaPredateur As Image = Image.FromFile("..\..\Resources\requin.png")
+    Dim ImaOeuf As Image = Image.FromFile("..\..\Resources\oeuf.png")
+    Dim deplacement As Vecteur = New Vecteur()
+    Dim camera As Vecteur = New Vecteur()
+    Dim WithEvents MonPoisson As Poisson
+    Dim WithEvents MonPredateur As Predateur
+    Dim WithEvents MonOeuf As Oeuf
+    Dim nbOeuf As Integer = 0
+    Dim nbNouveaunee As Integer = 0
+    Dim nbo As Integer = 0
+    Dim Poiscail As Poisson
+    Dim Loeuf As Oeuf
+    Dim listebisoeuf As List(Of Oeuf)
+    Dim compteur As Double
+
 
     Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
-        nbp = CInt(NbPoissonsTxt.Text)
-        nbr = CInt(NbPredateurTxt.Text)
-        nbo = 0
+        nbp = 1
+        nbr = 5
         rmin = 30
         rmax = 50
         vmin = CInt(VitesseMinTxt.Text)
         vmax = CInt(VitesseMaxTxt.Text)
-        Pmgr = 0
-        OV = 0
-        OM = 0
-        H = 500
-        L = 500
-        feuille = New Bitmap(500, 500)
+        compteur = 0
+
+
+        M = New Monde(nbp, nbr, L, H, rmin, rmax, vmin, vmax)
+
+        listebisoeuf = New List(Of Oeuf)
+
+        feuille = New Bitmap(1200, 520)
         dessin = Graphics.FromImage(feuille)
+
         PictureBox1.Image = feuille
         Randomize()
         initialiser(M)
-        Camera()
+
+        camera.X = 0
+        camera.Y = 0
+        deplacement.X = 0
+        deplacement.Y = 0
+
+        PictureBox1.SetBounds(camera.X, camera.Y, pbWidth, pbHeight)
+
+
+
 
         Timer1.Interval = 10
         Timer1.Start()
 
     End Sub
+
+
+
+    Private Sub initialiser(ByRef M As Monde)
+
+
+        For i = 0 To nbp - 1
+            Poiscail = New Poisson(L, H, rmin, rmax, vmin, vmax)
+            M.ListePoisson.Add(Poiscail)
+        Next
+
+
+
+    End Sub
+
     Private Sub afficherMonde()
-        feuille = New Bitmap(500, 500)
+        feuille = New Bitmap(1200, 520)
         dessin = Graphics.FromImage(feuille)
 
-
-        Dim i As Integer
-        Dim ImaPoisson As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\poisson.png")
-        Dim ImaPoisson2 As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\poisson1.png")
-        For i = 0 To nbp - 1
-            'If Math.Cos(M.Boids(i).orientation) < 0 Then
-            dessin.DrawImage(ImaPoisson, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
-            'Else
-            'dessin.DrawImage(ImaPoisson2, CInt(M.Boids(i).center.X), CInt(M.Boids(i).center.Y), CInt(M.Boids(i).Rayon), CInt(M.Boids(i).Rayon))
-            'End If
+        For Each poisson As Poisson In M.ListePoisson
+            dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt(poisson.Rayon * zoom), CInt(poisson.Rayon * zoom))
         Next
-        Dim j As Integer
-        Dim ImaPredateur As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\requin.png")
-        For j = 0 To nbr - 1
-            dessin.DrawImage(ImaPredateur, CInt(M.Predateur(j).center.X), CInt(M.Predateur(j).center.Y), CInt(M.Predateur(j).Rayon), CInt(M.Predateur(j).Rayon))
-        Next
-        Dim k As Integer
-        Dim ImaOeuf As Image = Image.FromFile("V:\WindowsApplication2\WindowsApplication2\Resources\Oeuf_Yoshi.png")
-        For k = 0 To OV - 1
-            dessin.DrawImage(ImaOeuf, CInt(M.Oeuf(k).center.X), CInt(M.Oeuf(k).center.Y), CInt(M.Oeuf(k).Rayon), CInt(M.Oeuf(k).Rayon))
+        For Each predateur As Predateur In M.ListePredateur
+            dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
         Next
 
 
-        EviterPre(M, nbr)
-        Pondre(M, nbp, OV, nbo, rmax, rmin, vmax, vmin)
-        'Survivre(M, OV, OM, nbp, nbr)
-        Eclore(M, OV, nbp, vmax, vmin, rmax, rmin)
-        gloutonner(M, nbp, nbr, Pmgr, vmax, vmin, OV, OM)
-        follow(M, nbp)
-        lbl_PMa.Text = Pmgr
-        lbl_OV.Text = OV
-        lbl_Pvi.Text = nbp
+        For Each oeuf As Oeuf In M.ListeOeuf
+
+            dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+
+        Next
+
+
+
+        lbl_OV.Text = Str(OV)
+        lbl_PMa.Text = "nbp :" + Str(nbp)
+        lbl_nbp.Text = Str(CInt(compteur))
         PictureBox1.Image = feuille
+
+
     End Sub
 
-    Private Sub initialiser(ByRef m As monde)
-        ReDim m.Boids(nbp)
-        ReDim m.Predateur(nbr)
-        If m.Oeuf Is Nothing Then
-        Else
-            ReDim m.Oeuf(OV)
-        End If
-
-        Dim j As Integer
-        Dim i As Integer
-        For i = 0 To nbp - 1
-            m.Boids(i).center.X = Rnd() * L
-            m.Boids(i).center.Y = Rnd() * H
-            m.Boids(i).Rayon = Rnd() * (rmax - rmin) + rmin
-            m.Boids(i).RayonOrientation = Rnd() * m.Boids(i).Rayon
-            m.Boids(i).RayonRepulsion = Rnd() * m.Boids(i).RayonOrientation
-            Dim z As Double
-            z = Rnd() * (vmax - vmin) + vmin
-            m.Boids(i).vitesse.X = Rnd() - 0.5
-            m.Boids(i).vitesse.Y = Rnd() - 0.5
-            normaliser(m.Boids(i).vitesse)
-            m.Boids(i).vitesse = mult(m.Boids(i).vitesse, z)
-            m.Boids(i).orientation = Rnd() * 2 * Math.PI
-        Next
-        For j = 0 To nbr - 1
-            m.Predateur(j).center.X = Rnd() * L
-            m.Predateur(j).center.Y = Rnd() * H
-            m.Predateur(j).Rayon = Rnd() * (rmax - rmin) + rmin
-            m.Predateur(j).RayonGlouton = Rnd() * m.Predateur(j).Rayon
-            Dim v As Double
-            v = Rnd() * (vmax - vmin) + vmin
-            m.Predateur(j).vitesse.X = Rnd() - 0.5
-            m.Predateur(j).vitesse.Y = Rnd() - 0.5
-            normaliser(m.Predateur(j).vitesse)
-            m.Predateur(j).vitesse = mult(m.Predateur(j).vitesse, v)
-            m.Predateur(j).orientation = Rnd() * 2 * Math.PI
-        Next
-    End Sub
 
     Private Sub Timer1_Tick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Timer1.Tick
         afficherMonde()
-        uupdate(M, 2, nbp)
+        compteur += 0.02
+
+        'Substitue la fonction uupdate
+        For Each poisson As Poisson In M.ListePoisson
+            poisson.Avance(poisson, 1.5, H, L, zoom)
+
+            poisson.Follow(M, nbp, L, H)
+            MonOeuf = New Oeuf(L, H, rmin, rmax, vmin, vmax)
+            poisson.Pondre(M, L, H, vmin, vmax, nbp, OV, nbo, rmax, rmin, MonOeuf)
+
+        Next
+        For Each predateur As Predateur In M.ListePredateur
+            predateur.Avance(predateur, 1, H, L, zoom)
+            predateur.Eviter(M, nbr, L, H)
+
+            predateur.Gloutonner(M, nbp, nbr, Pmgr, vmax, vmin)
+
+        Next
+
+
+        For Each oeuf As Oeuf In M.ListeOeuf
+
+            If oeuf.Center.Y * zoom + oeuf.Rayon * zoom = H - 20 * zoom Then
+                listebisoeuf.Add(oeuf)
+            End If
+            MonPoisson = New Poisson(L, H, rmin, rmax, vmin, vmax)
+            oeuf.Avance(oeuf, 1, H, L, vmin, vmax, nbp, OV, nbo, rmax, rmin, MonPoisson, zoom, M)
+
+        Next
+
+        For Each oeuf As Oeuf In listebisoeuf
+            M.ListeOeuf.Remove(oeuf)
+        Next
+
 
     End Sub
+
 
     Private Sub BtnActu_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles BtnActu.Click
         nbp = CInt(NbPoissonsTxt.Text)
         nbr = CInt(NbPredateurTxt.Text)
-        nbo = 0
+
         rmin = 30
         rmax = 50
         vmin = CInt(VitesseMinTxt.Text)
         vmax = CInt(VitesseMaxTxt.Text)
-        Pmgr = 0
-        OV = 0
-        H = 500
-        L = 500
         Randomize()
-        initialiser(M)
+        '   initialiser(M)
 
-        Timer1.Interval = 10
+        PictureBox1.SetBounds(camera.X, camera.Y, pbWidth, pbHeight)
+
+
+
+        Timer1.Interval = 5
         Timer1.Start()
     End Sub
 
+    ' Gestion Camera
 
-    Private Sub Camera()
+    Private Sub btnLeft_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnLeft.Click
+
+        If camera.X - 20 > 0 Then
+            camera.X = camera.X - 20
+            deplacement.X += 20
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+        ElseIf camera.X <= 0 Then
+        Else
+            deplacement.X += 20 - camera.X
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+            camera.X = 0
+        End If
+
+    End Sub
+
+    Private Sub btnRight_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnRight.Click
 
 
+        If camera.X + 20 < L - pbWidth Then
+            camera.X = camera.X + 20
+            deplacement.X -= 20
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+
+        ElseIf camera.X >= L - pbWidth Then
+        Else
+            deplacement.X -= L - camera.X - pbWidth
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+            camera.X = L - pbWidth
+        End If
+
+    End Sub
+
+    Private Sub btnTop_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnTop.Click
+
+
+        If camera.Y - 20 > 0 Then
+            camera.Y = camera.Y - 20
+            deplacement.Y += 20
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+
+        ElseIf camera.Y <= 0 Then
+        Else
+            deplacement.Y += 20 - camera.Y
+
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+            camera.Y = 0
+        End If
 
     End Sub
 
 
 
 
+    Private Sub btnBottom_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnBottom.Click
 
+
+        If camera.Y + 20 < H - pbHeight Then
+            camera.Y = camera.Y + 20
+            deplacement.Y -= 20
+
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+
+        ElseIf camera.Y >= H - pbHeight Then
+        Else
+            deplacement.Y -= H - camera.Y - pbHeight
+
+
+            For Each poisson As Poisson In M.ListePoisson
+                dessin.DrawImage(ImaPoisson, CInt((poisson.Center.X + deplacement.X) * zoom), CInt((poisson.Center.Y + deplacement.Y) * zoom), CInt((poisson.Rayon) * zoom), CInt(poisson.Rayon * zoom))
+            Next
+            For Each predateur As Predateur In M.ListePredateur
+                dessin.DrawImage(ImaPredateur, CInt((predateur.Center.X + deplacement.X) * zoom), CInt((predateur.Center.Y + deplacement.Y) * zoom), CInt(predateur.Rayon * zoom), CInt(predateur.Rayon * zoom))
+            Next
+
+            If nbo <> 0 Then
+                For Each oeuf As Oeuf In M.ListeOeuf
+                    If oeuf.Center.Y = L - 10 * zoom - oeuf.Rayon * zoom Then
+                    Else
+
+                        dessin.DrawImage(ImaOeuf, CInt((oeuf.Center.X + deplacement.X) * zoom), CInt((oeuf.Center.Y + deplacement.Y) * zoom), CInt(oeuf.Rayon * zoom), CInt(oeuf.Rayon * zoom))
+                    End If
+                Next
+            End If
+
+            camera.Y = H - pbHeight
+        End If
+
+    End Sub
+
+    'Gestion Zoom
+
+    Private Sub zoomPlus_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles zoomPlus.Click
+
+
+
+        If zoom >= 1.6 Then
+        Else
+            H /= zoom
+            L /= zoom
+            zoom += 0.2
+            H *= zoom
+            L *= zoom
+
+
+        End If
+
+
+    End Sub
+
+    Private Sub zoomMoins_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles zoomMoins.Click
+
+
+        If zoom <= 0.4 Then
+        Else
+
+            H = H / zoom
+            L = L / zoom
+
+
+            zoom -= 0.2
+            H *= zoom
+            L *= zoom
+
+
+        End If
+
+
+
+    End Sub
+
+    Private Sub GroupBox1_Enter(ByVal sender As System.Object, ByVal e As System.EventArgs)
+
+    End Sub
+
+    Private Sub BackgroundWorker1_DoWork(sender As System.Object, e As System.ComponentModel.DoWorkEventArgs) Handles BackgroundWorker1.DoWork
+
+    End Sub
 End Class
+
+
