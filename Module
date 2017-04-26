@@ -1,4 +1,4 @@
-Module Module1
+Module Module1 
     Structure Vec
         Dim X As Double
         Dim Y As Double
