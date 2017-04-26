@@ -11,6 +11,8 @@ Public Class Form1
     Dim Pmgr As Integer
     Dim OV As Integer
     Dim OM As Integer
+    Dim P As Boolean
+    Dim R As Boolean
     Dim WithEvents timer As Timer
     Dim M As monde
     Dim feuille As Bitmap
@@ -34,7 +36,7 @@ Public Class Form1
         PictureBox1.Image = feuille
         Randomize()
         initialiser(M)
-        Camera()
+
 
         Timer1.Interval = 10
         Timer1.Start()
@@ -66,12 +68,12 @@ Public Class Form1
             dessin.DrawImage(ImaOeuf, CInt(M.Oeuf(k).center.X), CInt(M.Oeuf(k).center.Y), CInt(M.Oeuf(k).Rayon), CInt(M.Oeuf(k).Rayon))
         Next
 
-
-        EviterPre(M, nbr)
+        'savoir(M, nbp, nbr, P, R)
+        'EviterPre(M, nbr, R)
+        'follow(M, nbp, P)
         Pondre(M, nbp, OV, nbo, rmax, rmin, vmax, vmin)
         Eclore(M, OV, nbp, vmax, vmin, rmax, rmin)
         gloutonner(M, nbp, nbr, Pmgr, vmax, vmin, OV, OM)
-        'follow(M, nbp)
         lbl_PMa.Text = Pmgr
         lbl_OV.Text = OV
         lbl_Pvi.Text = nbp
@@ -134,6 +136,8 @@ Public Class Form1
         vmax = CInt(VitesseMaxTxt.Text)
         Pmgr = 0
         OV = 0
+        P = False
+        R = False
         H = 500
         L = 500
         Randomize()
