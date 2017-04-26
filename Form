@@ -100,4 +100,64 @@ Public Class Form1
     End Sub
       
 
+
+
+
+
+
+'notre bébé orque
+Dim droite As sens
+    Dim gauche As sens
+    Dim haut As sens
+    Dim bas As sens
+
+    Private Sub btn_1_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles btn_1.KeyPress
+        If e.KeyChar = Chr(Keys.Up) Then
+            aller(M, haut, rmax, rmin, vmax, vmin)
+        End If
+    End Sub
+    Private Sub btn_2_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles btn_2.KeyPress
+        If e.KeyChar = Chr(Keys.Down) Then
+            aller(M, bas, rmax, rmin, vmax, vmin)
+        End If
+    End Sub
+    Private Sub btn_3_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles btn_3.KeyPress
+        If e.KeyChar = Chr(Keys.Left) Then
+            aller(M, gauche, rmax, rmin, vmax, vmin)
+        End If
+    End Sub
+    Private Sub btn_4_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles btn_4.KeyPress
+        If e.KeyChar = Chr(Keys.Right) Then
+            aller(M, droite, rmax, rmin, vmax, vmin)
+        End If
+    End Sub
+
+
+
+'A METTRE DANS LE MODULE POUR L'ORQUE:
+
+ Structure Orque
+        Dim center As Vec
+        Dim vitesse As Vec
+        Dim orientation As Double
+        Dim Rayon As Double
+        Dim RayonGlouton As Double
+    End Structure
+
+    Enum sens
+        droite
+        gauche
+        haut
+        bas
+    End Enum
+
+    Sub aller(ByRef m As monde, ByVal s As sens, ByVal rmax As Integer, ByVal rmin As Integer, ByVal vmax As Integer, ByVal vmin As Integer)
+
+    End Sub
+
+
+
+
+
+
 End Class
